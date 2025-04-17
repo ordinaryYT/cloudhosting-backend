@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const RENDER_API_KEY = process.env.RENDER_API_KEY;
+const RENDER_API_KEY = process.env.RENDER_API_KEY;  // Ensure this is set in your environment
 const RENDER_API_URL = "https://api.render.com/v1/services";
 
 // Get the default branch of the repository (either 'main' or 'master')
@@ -18,11 +18,11 @@ async function getDefaultBranch(repoUrl) {
     const res = await axios.get(apiUrl);
     return res.data.default_branch || "main";
   } catch (e) {
-    return "main"; // fallback
+    return "main";  // fallback to 'main' if the branch cannot be determined
   }
 }
 
-// Check if a specific file exists in the repository at the given branch
+// Check if a file exists in the repository at the given branch
 async function repoHasFile(repoUrl, fileName, branch = "main") {
   try {
     const [_, user, repo] = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)(\.git)?/i) || [];
@@ -35,7 +35,7 @@ async function repoHasFile(repoUrl, fileName, branch = "main") {
 }
 
 app.post("/deploy", async (req, res) => {
-  const { repoUrl } = req.body;
+  const { repoUrl, envVars } = req.body;
 
   if (!repoUrl || !repoUrl.startsWith("https://github.com/")) {
     return res.status(400).json({ error: "Invalid GitHub URL" });
@@ -54,32 +54,37 @@ app.post("/deploy", async (req, res) => {
     plan: "starter"
   };
 
-  // Check if the repo contains key files to determine project type
+  // Check for required files to determine project type
   const hasPackageJson = await repoHasFile(repoUrl, "package.json", defaultBranch);
   const hasRequirementsTxt = await repoHasFile(repoUrl, "requirements.txt", defaultBranch);
   const hasDockerfile = await repoHasFile(repoUrl, "Dockerfile", defaultBranch);
 
   if (hasDockerfile) {
-    // Handle Dockerized projects
     console.log("Using Docker deployment");
     payload.env = null;
   } else if (hasPackageJson) {
-    // Handle Node.js projects
     console.log("Using Node.js deployment");
     payload.env = "node";
     payload.buildCommand = "npm install";
     payload.startCommand = "npm start";
   } else if (hasRequirementsTxt) {
-    // Handle Python projects
     console.log("Using Python deployment");
     payload.env = "python";
     payload.buildCommand = "pip install -r requirements.txt";
-    payload.startCommand = "python app.py";  // Adjust this if the entry point is different
+    payload.startCommand = "python app.py";
   } else {
     return res.status(400).json({
       error: "Unsupported repo type",
       details: "Repo must contain a Dockerfile, package.json, or requirements.txt"
     });
+  }
+
+  // Add environment variables to the payload
+  if (envVars && Array.isArray(envVars)) {
+    payload.envVars = envVars.map(env => ({
+      key: env.key,
+      value: env.value
+    }));
   }
 
   try {
