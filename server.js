@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const RENDER_API_KEY = process.env.RENDER_API_KEY;  // Ensure this is set in your environment
+const RENDER_API_KEY = process.env.RENDER_API_KEY;  // Make sure this is set in your environment
 const RENDER_API_URL = "https://api.render.com/v1/services";
 
 // Get the default branch of the repository (either 'main' or 'master')
@@ -79,7 +79,7 @@ app.post("/deploy", async (req, res) => {
     });
   }
 
-  // Add environment variables to the payload
+  // Add environment variables to the deployment payload
   if (envVars && Array.isArray(envVars)) {
     payload.envVars = envVars.map(env => ({
       key: env.key,
