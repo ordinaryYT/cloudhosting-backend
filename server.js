@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const RENDER_API_KEY = process.env.RENDER_API_KEY;
-const RENDER_API_URL = "https://api.render.com/v1/services";
+const RENDER_API_URL = "https://cloudhosting-backend.onrender.com";
 
 app.post("/deploy", async (req, res) => {
   const { repoUrl } = req.body;
