@@ -1,13 +1,12 @@
-const express = require("express");
-const axios = require("axios");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+import express from "express";
+import axios from "axios";
+import bodyParser from "body-parser";
+import cors from "cors";
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// 🔐 Use your Render API key from env variable
 const RENDER_API_KEY = process.env.RENDER_API_KEY;
 const RENDER_API_URL = "https://api.render.com/v1/services";
 
@@ -58,6 +57,5 @@ app.post("/deploy", async (req, res) => {
   }
 });
 
-// ✅ Required for Render deployment
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
